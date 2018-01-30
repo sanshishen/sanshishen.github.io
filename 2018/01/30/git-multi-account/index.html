@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="description" content="">
+  <meta name="keywords" content="">
+  
+    <link rel="icon" href="">
+  
+    
+  <title>Git多账号配置 | 展召吃米粮</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.1.20/jquery.fancybox.min.css" />
+</head>
+
+<body>
+  <header>
+  <div class="header-container">
+    <a class='logo' href="/">
+      <span>展召吃米粮</span>
+    </a>
+    <ul class="right-header">
+      
+        <li class="nav-item">
+          
+            <a href="/" class="item-link">首页</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/tags" class="item-link">标签</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/archives" class="item-link">归档</a>
+          
+        </li>
+      
+        <li class="nav-item">
+          
+            <a href="/about" class="item-link">关于</a>
+          
+        </li>
+      
+    </ul>
+  </div>
+</header>
+
+  <main id='post'>
+  <div class="content">
+    <article>
+        <section class="content markdown-body">
+          <h1>Git多账号配置</h1>
+          <div class='post-meta'>
+            <i class="fa fa-calendar" aria-hidden="true"></i> <time>2018年01月30日</time>
+            
+            
+              | 
+                  <i class="fa fa-tags" aria-hidden="true"></i>
+                
+               
+  <a href="/tags/#git" class='tag'>git</a>
+
+  <a href="/tags/#ssh-key" class='tag'>ssh-key</a>
+
+
+            
+          </div>
+          <p>搬砖过程中，有时候需要在一台电脑上登录多个git账号，比如公司的gitlab，与程序猿自己的github账号。刚好碰到需要这种情况，也从网上查了一些资料，总结一下。</p>
+<blockquote>
+<p>note: 此文操作基于macOS，与其他操作系统略有差异，但差别不大。</p>
+</blockquote>
+<h2 id="重置全局配置"><a href="#重置全局配置" class="headerlink" title="重置全局配置"></a>重置全局配置</h2><p>首次提交代码时，git会提示你配置全局的邮箱与名称<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">git config --global user.name <span class="string">'your_name'</span></span><br><span class="line">git config --global user.email <span class="string">'your_email'</span></span><br></pre></td></tr></table></figure></p>
+<p>如果你配置过全局邮箱与名称，可以使用如下命令清除。如果忘记是否配置过，最好还是清除一下。<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">git config --global --<span class="built_in">unset</span> user.name</span><br><span class="line">git config --global --<span class="built_in">unset</span> user.email</span><br></pre></td></tr></table></figure></p>
+<h2 id="生成ssh-key"><a href="#生成ssh-key" class="headerlink" title="生成ssh-key"></a>生成ssh-key</h2><p>生成的SSH keys里面包含了账号和邮箱信息</p>
+<h3 id="用ssh-keygen命令生成一组新的id-rsa和id-rsa-pub"><a href="#用ssh-keygen命令生成一组新的id-rsa和id-rsa-pub" class="headerlink" title="用ssh-keygen命令生成一组新的id_rsa和id_rsa.pub"></a>用ssh-keygen命令生成一组新的id_rsa和id_rsa.pub</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ssh-keygen -t rsa -C <span class="string">'your_github_email'</span></span><br></pre></td></tr></table></figure>
+<p>平时操作都是一路回车，默认会在<code>~/.ssh/</code>文件夹下生成id_rsa和id_rsa.pus文件。但这次需要注意，出现<code>Enter file in which to save the key (~/.ssh/id_rsa):</code>时，输入一个名字，比如id_rsa_github。</p>
+<p>使用同样的方法生成gitlab ssh key，命名为id_rsa_gitlab。</p>
+<p>此时~/.ssh/路径下会存在四个密钥文件：id_rsa_github、id_rsa_github.pub、id_rsa_gitlab、id_rsa_gitlab.pub。</p>
+<h3 id="执行ssh-agent让ssh识别新的私钥"><a href="#执行ssh-agent让ssh识别新的私钥" class="headerlink" title="执行ssh-agent让ssh识别新的私钥"></a>执行ssh-agent让ssh识别新的私钥</h3><p>因为默认只读取id_rsa，为了让SSH识别新的私钥，需将其添加到SSH agent中：<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ssh-add ~/.ssh/id_rsa_github</span><br><span class="line">ssh-add ~/.ssh/id_rsa_gitlab</span><br></pre></td></tr></table></figure></p>
+<p>如果出现<code>Could not open a connection to your authentication agent</code>的错误，就试着使用以下命令：<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ssh-agent bash</span><br><span class="line">ssh-add ~/.ssh/id_rsa_github</span><br></pre></td></tr></table></figure></p>
+<h3 id="配置git-confing文件"><a href="#配置git-confing文件" class="headerlink" title="配置git confing文件"></a>配置git confing文件</h3><p>在~/.ssh/文件夹下查看config文件是否已经存在，不存在就创建一个。<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">touch config <span class="comment">#创建config文件</span></span><br></pre></td></tr></table></figure></p>
+<p>使用文本编辑器打开config文件，配置示意如下：<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 该文件用于配置私钥对应的服务器</span></span><br><span class="line"><span class="comment"># Default github user(your_github_email)</span></span><br><span class="line">Host git@github.com</span><br><span class="line">    HostName github.com</span><br><span class="line">    User first_name</span><br><span class="line">    IdentityFile ~/.ssh/id_rsa_github</span><br><span class="line"></span><br><span class="line"><span class="comment"># second user (second_email)</span></span><br><span class="line"><span class="comment"># 创建一个别名，your_company修为你所在公司的域名</span></span><br><span class="line">Host git@git.your_company.com</span><br><span class="line">    HostName git.your_company.com</span><br><span class="line">    User second_name</span><br><span class="line">    IdentityFile ~/.ssh/id_rsa_gitlab</span><br></pre></td></tr></table></figure></p>
+<p>每个账号单独配置一个<code>Host</code>，每个<code>Host</code>要取一个别名，每个Host主要配置<code>HostName</code>和<code>IdentityFile</code>两个属性即可。</p>
+<p>Host的名字可以随意取，但会影响git相关命令。</p>
+<p>如果你的定义如下的话：<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">Host mygithub</span><br><span class="line">    HostName https://github.com</span><br><span class="line">    User first_name</span><br><span class="line">    IdentityFile ~/.ssh/id_rsa_github</span><br></pre></td></tr></table></figure></p>
+<p>那么你原本的克隆命令是<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">git <span class="built_in">clone</span> git@github.com:sanshishen/virtual-dom.git</span><br></pre></td></tr></table></figure></p>
+<p>就要相应的变为<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">git <span class="built_in">clone</span> git@mygithub:sanshishen/virtual-dom.git</span><br></pre></td></tr></table></figure></p>
+<p>即<code>Host</code>取代的是原本SSH地址git@<code>HostName</code>:sanshishen/virtual-dom.git中HostName的位置。</p>
+<ul>
+<li>HostName      真实的域名地址</li>
+<li>IdentityFile  id_rsa路径</li>
+<li>PreferredAuthentications 配置登录时用什么权限认证，publickey|password publickey|keyboard-interactive…</li>
+<li>User          配置该账号下的用户名</li>
+</ul>
+<h2 id="将生成的github与gitlib的公钥分别上传到服务器"><a href="#将生成的github与gitlib的公钥分别上传到服务器" class="headerlink" title="将生成的github与gitlib的公钥分别上传到服务器"></a>将生成的github与gitlib的公钥分别上传到服务器</h2><p>github可在<code>Settings</code> -&gt; <code>SSH and GPG keys</code> -&gt; <code>New SSH key</code>中添加，填写一个标题，将id_rsa_github.pub文件中的内容粘贴入Key文本框，保存即可。</p>
+<p>gitlab在<code>User Settings</code> -&gt; <code>SSH Keys</code>中添加，操作步骤同github，但公钥文件是id_rsa_gitlab.pub。</p>
+<h2 id="测试一下"><a href="#测试一下" class="headerlink" title="测试一下"></a>测试一下</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 测试连接github</span></span><br><span class="line">ssh -T git@github.com</span><br><span class="line">&gt; Hi sanshishen! You<span class="string">'ve successfully authenticated, but GitHub does not provide shell access.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string"># 测试连接gitlab</span></span><br><span class="line"><span class="string">ssh -T git@git.your_company.com</span></span><br><span class="line"><span class="string">Welcome to Gitlab，展召！</span></span><br></pre></td></tr></table></figure>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://www.jianshu.com/p/89cb26e5c3e8" target="_blank" rel="noopener">同一客户端下使用多个git账号</a></li>
+<li><a href="https://www.cnblogs.com/popfisher/p/5731232.html" target="_blank" rel="noopener">Windows下Git多账号配置，同一电脑多个ssh-key的管理</a></li>
+<li><a href="https://www.jianshu.com/p/f7f4142a1556" target="_blank" rel="noopener">管理git生成的多个ssh key</a></li>
+</ul>
+
+        </section>
+    </article>
+    
+        
+  </div>
+  <aside>
+    
+    <div class="toc-container">
+        <h1>目录</h1>
+        <div class="content">
+            <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#重置全局配置"><span class="toc-number">1.</span> <span class="toc-text">重置全局配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#生成ssh-key"><span class="toc-number">2.</span> <span class="toc-text">生成ssh-key</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#用ssh-keygen命令生成一组新的id-rsa和id-rsa-pub"><span class="toc-number">2.1.</span> <span class="toc-text">用ssh-keygen命令生成一组新的id_rsa和id_rsa.pub</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#执行ssh-agent让ssh识别新的私钥"><span class="toc-number">2.2.</span> <span class="toc-text">执行ssh-agent让ssh识别新的私钥</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#配置git-confing文件"><span class="toc-number">2.3.</span> <span class="toc-text">配置git confing文件</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#将生成的github与gitlib的公钥分别上传到服务器"><span class="toc-number">3.</span> <span class="toc-text">将生成的github与gitlib的公钥分别上传到服务器</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#测试一下"><span class="toc-number">4.</span> <span class="toc-text">测试一下</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考资料"><span class="toc-number">5.</span> <span class="toc-text">参考资料</span></a></li></ol>
+        </div>
+    </div>
+    
+  </aside>
+</main>
+
+
+
+  <footer>
+  <div class="copyright">
+    <div>
+      &copy; 2018 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a>&nbsp
+    </div>
+    <div>
+      Theme by <a href="https://github.com/lewis-geek/hexo-theme-Aath" target="_blank">Aath</a>
+    </div>
+  </div>
+</footer>
+
+
+<script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+<script src="/lib/in-view.min.js"></script>
+<script src="/lib/lodash.min.js"></script>
+<script>
+  var isDown = true
+  var oldY = 0
+  inView.offset(50)
+
+  document.body.addEventListener('touchstart', function(){});
+  
+  window.addEventListener('scroll', _.throttle(e => {
+    var currentY = window.scrollY
+    if((oldY - currentY) < 0) {
+      isDown = true
+    } else {
+      isDown = false
+    }
+    oldY = currentY
+  }, 250))
+
+  $("article img").each(function() {
+      var strA = "<a data-fancybox='gallery' href='" + this.src + "'></a>";
+      $(this).wrapAll(strA);
+  });
+
+  $('.toc-link').each(function() {
+      var href = $(this).attr("href");
+      
+      inView(href).on('exit', () => {
+        if (isDown) {
+          handleActive(href)
+        }
+      })
+
+      inView(href).on('enter', () => {
+        if (!isDown) {
+          handleActive(href)
+        }
+      })
+
+      this.onclick = function(e) {
+        var pos = $(href).offset().top - 10;
+        $("html,body").animate({scrollTop: pos}, 300);
+        setTimeout(() => {
+          handleActive(href)
+        }, 350)
+        return false
+      }
+  })
+
+  function handleActive(href) {
+    document.querySelectorAll('.toc-link').forEach(elm => {
+      elm.classList.remove('active')
+    })
+    document.querySelector(".toc [href='"+ href +"']").classList.add('active')
+  }
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.1.20/jquery.fancybox.min.js"></script>
+
+
+</body>
+</html>
